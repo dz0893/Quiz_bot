@@ -123,9 +123,6 @@ async def next_step_in_questionary(callback: types.CallbackQuery, current_questi
     right_answers_count = await get_right_answers_count(callback.from_user.id)
     if is_right_question:
         right_answers_count += 1
-        print("RIGHT " + str(right_answers_count))
-    else:
-        print("WRONG " + str(right_answers_count))
 
     await update_quiz_progress(callback.from_user.id, current_question_index, right_answers_count)
 
@@ -202,8 +199,6 @@ async def new_quiz(message):
     if current_question_index >= len(quiz_data):
         current_question_index = 0
         right_answers_count = 0
-
-    print("START NEW GAME " + str(right_answers_count))
 
     await update_quiz_progress(user_id, current_question_index, right_answers_count)
 
