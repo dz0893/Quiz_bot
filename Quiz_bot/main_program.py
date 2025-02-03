@@ -120,9 +120,12 @@ async def print_answer_message(callback: types.CallbackQuery, is_right_question,
 async def next_step_in_questionary(callback: types.CallbackQuery, current_question_index, is_right_question):
     current_question_index += 1
     
-    right_answers_count = get_right_answers_count(callback.user_id)
+    right_answers_count = await get_right_answers_count(callback.from_user.id)
     if is_right_question:
         right_answers_count += 1
+        print("RIGHT " + str(right_answers_count))
+    else:
+        print("WRONG " + str(right_answers_count))
 
     await update_quiz_progress(callback.from_user.id, current_question_index, right_answers_count)
 
@@ -147,16 +150,16 @@ async def create_table():
         
         #await db.execute('''DROP TABLE IF EXISTS quiz_state''')
         #await db.execute('''ALTER TABLE quiz_state ADD right_answers_count INTEGER''')
-        await db.execute("SHOW COLUMNS FROM quiz_state")
+        #await db.execute("SHOW COLUMNS FROM quiz_state")
         await db.execute('''CREATE TABLE IF NOT EXISTS quiz_state (user_id INTEGER PRIMARY KEY, question_index INTEGER, right_answers_count INTEGER)''')
         # Сохраняем изменения
         await db.commit()
 
-async def update_quiz_progress(user_id, index, right_answer_count):
+async def update_quiz_progress(user_id, index, right_answers_count):
     # Создаем соединение с базой данных (если она не существует, она будет создана)
     async with aiosqlite.connect(DB_NAME) as db:
         # Вставляем новую запись или заменяем ее, если с данным user_id уже существует
-        await db.execute('INSERT OR REPLACE INTO quiz_state (user_id, question_index, right_answer_count) VALUES (?, ?, ?)', (user_id, index, right_answer_count))
+        await db.execute('INSERT OR REPLACE INTO quiz_state (user_id, question_index, right_answers_count) VALUES (?, ?, ?)', (user_id, index, right_answers_count))
         # Сохраняем изменения
         await db.commit()
 
@@ -188,22 +191,19 @@ async def get_right_answers_count(user_id):
 
 
 
-
-
-
-
-
 async def new_quiz(message):
     # получаем id пользователя, отправившего сообщение
     user_id = message.from_user.id
     # сбрасываем значение текущего индекса вопроса квиза в 0
 
     current_question_index = await get_quiz_index(user_id)
-    right_answers_count = get_right_answers_count(user_id)
+    right_answers_count = await get_right_answers_count(user_id)
 
     if current_question_index >= len(quiz_data):
         current_question_index = 0
         right_answers_count = 0
+
+    print("START NEW GAME " + str(right_answers_count))
 
     await update_quiz_progress(user_id, current_question_index, right_answers_count)
 
