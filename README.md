@@ -2,5 +2,4 @@
 
 Commands:
 - "/start"
-- "Начать игру"
 - "/quiz"
