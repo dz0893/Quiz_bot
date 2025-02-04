@@ -25,7 +25,6 @@
     <Compile Include="main_program.py" />
     <Compile Include="question_data.json" />
     <Compile Include="quiz_data_generator.py" />
-    <Compile Include="config.json" />
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">
