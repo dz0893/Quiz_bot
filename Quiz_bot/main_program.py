@@ -18,7 +18,7 @@ nest_asyncio.apply()
 logging.basicConfig(level=logging.INFO)
 
 # считываем токен
-with open('config.gitignore', 'r') as json_file:
+with open('config.json', 'r') as json_file:
     API_TOKEN = json.load(json_file).get("API_TOKEN")
 
 # Объект бота
