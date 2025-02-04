@@ -2,6 +2,7 @@ import asyncio
 import logging
 import nest_asyncio
 import aiosqlite
+import quiz_data_generator
 import json
 
 from aiogram import F
@@ -16,8 +17,9 @@ nest_asyncio.apply()
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
-# Замените "YOUR_BOT_TOKEN" на токен, который вы получили от BotFather
-API_TOKEN = '8033833417:AAHuvUu4sdJSf_GkrOSH2mnO3E5I0uautO4'
+# считываем токен
+with open('config.gitignore', 'r') as json_file:
+    API_TOKEN = json.load(json_file).get("API_TOKEN")
 
 # Объект бота
 bot = Bot(token=API_TOKEN)
@@ -27,8 +29,8 @@ dp = Dispatcher()
 DB_NAME = 'quiz_bot.db'
 
 # получаем данные опроса
-with open('question_data.json', 'r') as json_file:
-    quiz_data = json.load(json_file).get("question_data")
+quiz_data_generator = quiz_data_generator.quiz_data_generator()
+quiz_data = quiz_data_generator.quiz_data
 
 
 # Запуск процесса поллинга новых апдейтов
@@ -52,30 +54,20 @@ async def cmd_start(message: types.Message):
 @dp.message(F.text=="Начать игру")
 @dp.message(Command("quiz"))
 async def cmd_quiz(message: types.Message):
-    # Отправляем новое сообщение без кнопок
-    await message.answer(f"Давайте начнем квиз!")
-    # Запускаем новый квиз
-    await new_quiz(message)
+    if quiz_data == None:
+        await message.answer(f"Сегодня не поиграем")
+    else:
+        # Отправляем новое сообщение без кнопок
+        await message.answer(f"Давайте начнем квиз!")
+        # Запускаем новый квиз
+        await new_quiz(message)
 
 
-# Для возможности вывода данного ответа, в коллбек записывается индекс нажатой кнопки и по нему уже определяется, был ли ответ правильным
-@dp.callback_query(F.data == "0")
-async def answer_0(callback: types.CallbackQuery):
+valid_callbacks = ["0", "1", "2", "3"]
+
+@dp.callback_query(lambda callback_query: callback_query.data in valid_callbacks)
+async def handle_callback_query(callback: types.CallbackQuery):
     await answer(callback)
-
-@dp.callback_query(F.data == "1")
-async def answer_0(callback: types.CallbackQuery):
-    await answer(callback)
-
-@dp.callback_query(F.data == "2")
-async def answer_0(callback: types.CallbackQuery):
-    await answer(callback)
-
-@dp.callback_query(F.data == "3")
-async def answer_0(callback: types.CallbackQuery):
-    await answer(callback)
-
-
 
 async def answer(callback):
     current_question_index = await get_quiz_index(callback.from_user.id)
@@ -85,7 +77,6 @@ async def answer(callback):
         await right_answer(callback, current_question_index, correct_option)
     else:
         await wrong_answer(callback, current_question_index, correct_option)
-
 
 async def right_answer(callback, current_question_index, correct_option):
     await next_question_action(callback, True, current_question_index, correct_option)
